@@ -1,4 +1,4 @@
-package org.teamvoided.template.mixin;
+package com.theendercore.cavenet.mixin;
 
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.server.MinecraftServer;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.net.Proxy;
 
-import static org.teamvoided.template.Template.log;
+import static com.theendercore.cavenet.Cavenet.log;
 
 @Mixin(MinecraftServer.class)
 public class ExampleServerMixin {

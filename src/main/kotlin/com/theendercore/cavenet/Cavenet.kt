@@ -1,20 +1,20 @@
-package org.teamvoided.template
+package com.theendercore.cavenet
 
 import me.fzzyhmstrs.fzzy_config.api.ConfigApi
 import net.minecraft.resources.ResourceLocation
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.teamvoided.template.config.TemplateConfig
+import com.theendercore.cavenet.config.CavenetConfig
 
 @Suppress("unused")
-object Template {
-    const val MODID = "template"
+object Cavenet {
+    const val MODID = "cavenet"
 
     @JvmField
-    val log: Logger = LoggerFactory.getLogger(Template::class.simpleName)
+    val log: Logger = LoggerFactory.getLogger(Cavenet::class.simpleName)
 
     @JvmField
-    var config = ConfigApi.registerAndLoadConfig(::TemplateConfig)
+    var config = ConfigApi.registerAndLoadConfig(::CavenetConfig)
 
     fun init() {
         log.info("Hello from Common")

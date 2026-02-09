@@ -1,10 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.teamvoided.template.mixin.client",
+  "package": "com.theendercore.cavenet.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": [
-    "ExampleMixin"
+  "mixins": [
+    "ExampleServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

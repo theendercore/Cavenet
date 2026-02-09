@@ -30,9 +30,9 @@ repositories {
 //println("Task: " + gradle.startParameter.taskNames.joinToString(","))
 
 modSettings {
-    entrypoint("main", "org.teamvoided.template.Template::init")
-    entrypoint("client", "org.teamvoided.template.client.TemplateClient::init")
-    entrypoint("fabric-datagen", "org.teamvoided.template.data.gen.TemplateData")
+    entrypoint("main", "com.theendercore.cavenet.Cavenet::init")
+    entrypoint("client", "com.theendercore.cavenet.client.CavenetClient::init")
+    entrypoint("fabric-datagen", "com.theendercore.cavenet.data.gen.CavenetData")
 
     mixinFile("${modId()}.client.mixins.json")
     mixinFile("${modId()}.mixins.json")
