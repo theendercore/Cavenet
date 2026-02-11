@@ -4,9 +4,9 @@ import com.theendercore.cavenet.client.init.CNCommands
 import com.theendercore.cavenet.client.init.CNNetworkManager
 import com.theendercore.cavenet.client.init.CNRenderer
 
+@Suppress("unused")
 object CavenetClient {
 
-    @Suppress("unused")
     fun init() {
         CNNetworkManager.init()
         CNRenderer.init()
