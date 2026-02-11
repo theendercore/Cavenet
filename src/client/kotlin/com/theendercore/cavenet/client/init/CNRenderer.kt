@@ -44,7 +44,8 @@ object CNRenderer {
             )
 
             if (net.isEmpty()) continue
-            for ((nodePos, node) in net.nodes()) {
+            for (nodePos in net.nodePositions()) {
+                val node = CNLogic.nodeMap[nodePos] ?: continue
                 if (!node.shouldRender()) continue
 
                 val light = max(getLightColor(world, nodePos), 7 shl 4)

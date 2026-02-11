@@ -2,6 +2,7 @@ package com.theendercore.cavenet.client.init
 
 import com.theendercore.cavenet.client.CavenetClient.nodes
 import com.theendercore.cavenet.client.network.CaveNetwork
+import com.theendercore.cavenet.client.network.node.INode
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
@@ -9,17 +10,24 @@ import net.minecraft.core.Direction
 import net.minecraft.world.entity.player.Player
 
 object CNLogic {
-    var networks = mutableListOf<CaveNetwork>()
+    val networks = mutableListOf<CaveNetwork>()
+    val nodeMap = mutableMapOf<BlockPos, INode>()
+    fun addNetwork(player: Player) = addNetwork(player.blockPosition(), player.nearestViewDirection)
+    fun addNetwork(pos: BlockPos, dir: Direction): CaveNetwork {
+        val net = CaveNetwork(pos, dir)
+        networks.add(net)
+        return net
+    }
+
+    fun removeNetwork(net: CaveNetwork) {
+        net.clear()
+        networks.remove(net)
+    }
+
     var TicksPerTick = -1
     var tickCounter = 0
 
-    fun init() {
-        ClientTickEvents.END_WORLD_TICK.register(::clientTick)
-    }
-
-    fun canNodeExplore(world: ClientLevel, pos: BlockPos): Boolean {
-        return world.getBlockState(pos).isAir && !world.canSeeSky(pos)
-    }
+    fun init() = ClientTickEvents.END_WORLD_TICK.register(::clientTick)
 
 
     fun clientTick(world: ClientLevel) {
@@ -42,10 +50,8 @@ object CNLogic {
 
     }
 
-    fun addNetwork(player: Player) = addNetwork(player.blockPosition(), player.nearestViewDirection)
-    fun addNetwork(pos: BlockPos, dir: Direction): CaveNetwork {
-        val net = CaveNetwork(pos, dir)
-        networks.add(net)
-        return net
+    fun canNodeExplore(world: ClientLevel, pos: BlockPos): Boolean {
+        return world.getBlockState(pos).isAir && !world.canSeeSky(pos)
     }
+
 }

@@ -52,7 +52,8 @@ object CNCommands {
         val src = ctx.source ?: return -1
 
         val netCount = CNLogic.networks.size
-        val nodeCount = CNLogic.networks.sumOf { it.size() }
+        val nodeCount = CNLogic.nodeMap.size
+        CNLogic.nodeMap.clear()
         CNLogic.networks.clear()
         src.sendFeedback(Component.literal("Cleared $netCount networks and $nodeCount nodes!"))
         return Command.SINGLE_SUCCESS
