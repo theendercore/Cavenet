@@ -1,6 +1,6 @@
 package com.theendercore.cavenet.client.network
 
-import com.theendercore.cavenet.client.init.CNLogic
+import com.theendercore.cavenet.client.init.CNNetworkManager
 import com.theendercore.cavenet.client.network.node.DoorNode
 import com.theendercore.cavenet.client.network.node.ExploreNode
 import com.theendercore.cavenet.client.network.node.ExploreNode.Companion.ExploreState
@@ -8,12 +8,15 @@ import com.theendercore.cavenet.client.sendMessage
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import java.util.*
 
 class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPhase) {
     constructor(pos: BlockPos, direction: Direction) : this(direction, pos, NetPhase.OPENING_DOOR) {
         doorPos.add(pos)
         DoorNode(pos, this)
     }
+
+    val id: UUID = UUID.randomUUID()
 
     val doorMap = Direction.entries.filter { it.axis != direction.axis }
 
@@ -25,23 +28,23 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
         when (phase) {
             NetPhase.OPENING_DOOR -> {
                 for (nodePos in doorPos.toList()) {
-                    val node = CNLogic.nodeMap[nodePos]
+                    val node = CNNetworkManager.nodeMap[nodePos]
                     if (node !is DoorNode) {
                         println("Network has bad DoorNode pos: [$nodePos]")
                         continue
                     }
                     if (!node.shouldTick()) continue
 
-                    if (!CNLogic.canNodeExplore(world, nodePos)) {
-                        CNLogic.nodeMap.remove(nodePos)
+                    if (!CNNetworkManager.canNodeExplore(world, nodePos)) {
+                        CNNetworkManager.nodeMap.remove(nodePos)
                         doorPos.remove(nodePos)
                         continue
                     }
 
                     for (dir in doorMap) {
                         val sidePos = nodePos.relative(dir)
-                        if (!CNLogic.canNodeExplore(world, sidePos)) continue
-                        val otherNode = CNLogic.nodeMap[sidePos]
+                        if (!CNNetworkManager.canNodeExplore(world, sidePos)) continue
+                        val otherNode = CNNetworkManager.nodeMap[sidePos]
                         if (otherNode != null) continue
 
                         doorPos.add(sidePos)
@@ -56,15 +59,15 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
 
             NetPhase.EXPLORING_CAVE -> {
                 for (nodePos in explorePos.toList()) {
-                    val node = CNLogic.nodeMap[nodePos]
+                    val node = CNNetworkManager.nodeMap[nodePos]
                     if (node !is ExploreNode) {
                         println("Network has bad ExploreNode pos: [$nodePos]")
                         continue
                     }
                     if (!node.shouldTick()) continue
 
-                    if (!CNLogic.canNodeExplore(world, nodePos)) {
-                        CNLogic.nodeMap.remove(nodePos)
+                    if (!CNNetworkManager.canNodeExplore(world, nodePos)) {
+                        CNNetworkManager.nodeMap.remove(nodePos)
                         explorePos.remove(nodePos)
                         continue
                     }
@@ -72,11 +75,11 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
                     var hasEdge = false
                     for (dir in Direction.entries) {
                         val sidePos = nodePos.relative(dir)
-                        if (!CNLogic.canNodeExplore(world, sidePos)) {
+                        if (!CNNetworkManager.canNodeExplore(world, sidePos)) {
                             hasEdge = true
                             continue
                         }
-                        val otherNode = CNLogic.nodeMap[sidePos]
+                        val otherNode = CNNetworkManager.nodeMap[sidePos]
                         if (otherNode != null) continue
 
                         explorePos.add(sidePos)
@@ -96,7 +99,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
     private fun markAsDone() {
         phase = NetPhase.COMPLETE
         for (nodePos in explorePos) {
-            CNLogic.nodeMap.remove(nodePos)
+            CNNetworkManager.nodeMap.remove(nodePos)
         }
         explorePos.clear()
         sendMessage("Net [$pos] Done!")
@@ -107,7 +110,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
         var offPos: BlockPos
         for (dPos in doorPos) {
             offPos = dPos.relative(direction)
-            if (CNLogic.canNodeExplore(world, offPos)) {
+            if (CNNetworkManager.canNodeExplore(world, offPos)) {
                 explorePos.add(offPos)
                 ExploreNode(offPos, this)
             }
@@ -120,7 +123,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
 
     fun clear() {
         for (nodePos in (doorPos + explorePos)) {
-            CNLogic.nodeMap.remove(nodePos)
+            CNNetworkManager.nodeMap.remove(nodePos)
         }
         doorPos.clear()
         explorePos.clear()

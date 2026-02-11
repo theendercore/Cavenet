@@ -25,7 +25,7 @@ object CNRenderer {
     fun init() = WorldRenderEvents.AFTER_TRANSLUCENT.register(::renderCustom)
 
     fun renderCustom(ctx: WorldRenderContext) {
-        if (CNLogic.networks.isEmpty()) return
+        if (CNNetworkManager.networks.isEmpty()) return
         val posStack = ctx.matrixStack() ?: return
         val consumers = ctx.consumers() ?: return
         val profiler = ctx.profiler()
@@ -51,7 +51,7 @@ object CNRenderer {
 
         val color = 0xff_ffffff.toInt()
 
-        for (net in CNLogic.networks) {
+        for (net in CNNetworkManager.networks) {
             if (!ctx.camera().isInRenderDistance(net)) continue
 
 
@@ -59,7 +59,7 @@ object CNRenderer {
 
             if (net.isEmpty()) continue
             for (nodePos in net.nodePositions()) {
-                val node = CNLogic.nodeMap[nodePos] ?: continue
+                val node = CNNetworkManager.nodeMap[nodePos] ?: continue
                 if (!node.shouldRender()) continue
                 val light = max(getLightColor(world, nodePos), 7 shl 4)
 
