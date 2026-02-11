@@ -14,6 +14,8 @@ class DoorNode(pos: BlockPos, val net: CaveNetwork) : INode {
     override fun shouldTick(): Boolean = isActive
     override fun network(): CaveNetwork = net
 
+    override fun toString() = "DoorNode:[$net]"
+
     /* fun tick(world: ClientLevel, pos: BlockPos) {
            if (!CNLogic.canNodeExplore(world, pos)) {
                nodes.remove(pos)

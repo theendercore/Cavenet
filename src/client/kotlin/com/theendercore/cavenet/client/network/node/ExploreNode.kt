@@ -1,14 +1,16 @@
 package com.theendercore.cavenet.client.network.node
 
-import com.theendercore.cavenet.client.CavenetClient.nodes
 import com.theendercore.cavenet.client.init.CNLogic
 import com.theendercore.cavenet.client.network.CaveNetwork
-import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
 
-class ExploreNode(val net: CaveNetwork, var state: ExploreState = ExploreState.EXPLORING) : INode {
-    override fun shouldTick(): Boolean = state != ExploreState.INACTIVE
+class ExploreNode(pos: BlockPos, val net: CaveNetwork, var state: ExploreState = ExploreState.UNDETERMINED) : INode {
+
+    init {
+        CNLogic.nodeMap[pos] = this
+    }
+
+    override fun shouldTick(): Boolean = state == ExploreState.UNDETERMINED
     override fun network(): CaveNetwork = net
 
     /*fun tick(world: ClientLevel, pos: BlockPos) {
@@ -38,13 +40,13 @@ class ExploreNode(val net: CaveNetwork, var state: ExploreState = ExploreState.E
         }
     }*/
 
-    override fun shouldRender(): Boolean = false
+    override fun shouldRender(): Boolean = state != ExploreState.MIDDLE
 
     companion object {
         enum class ExploreState {
-            EXPLORING,
-            INACTIVE,
-            DELETING
+            UNDETERMINED,
+            MIDDLE,
+            EDGE
         }
     }
 }

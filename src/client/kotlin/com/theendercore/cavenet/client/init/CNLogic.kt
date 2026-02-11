@@ -1,6 +1,5 @@
 package com.theendercore.cavenet.client.init
 
-import com.theendercore.cavenet.client.CavenetClient.nodes
 import com.theendercore.cavenet.client.network.CaveNetwork
 import com.theendercore.cavenet.client.network.node.INode
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
@@ -12,7 +11,11 @@ import net.minecraft.world.entity.player.Player
 object CNLogic {
     val networks = mutableListOf<CaveNetwork>()
     val nodeMap = mutableMapOf<BlockPos, INode>()
-    fun addNetwork(player: Player) = addNetwork(player.blockPosition(), player.nearestViewDirection)
+    fun addNetwork(player: Player) = addNetwork(
+        BlockPos(player.blockX, player.eyePosition.y.toInt(), player.blockZ),
+        player.nearestViewDirection
+    )
+
     fun addNetwork(pos: BlockPos, dir: Direction): CaveNetwork {
         val net = CaveNetwork(pos, dir)
         networks.add(net)
@@ -24,28 +27,26 @@ object CNLogic {
         networks.remove(net)
     }
 
-    var TicksPerTick = -1
-    var tickCounter = 0
+    var ticksToSkip = -1
+    var operationsPerTick = -1
+    var skippedTickCounter = 0
 
     fun init() = ClientTickEvents.END_WORLD_TICK.register(::clientTick)
 
 
     fun clientTick(world: ClientLevel) {
-        if (nodes.isEmpty()) return
-        var ticks = true
-        if (TicksPerTick > -1) {
-            if (TicksPerTick == 0) ticks = false
-            else {
-                tickCounter++
-                if (tickCounter >= TicksPerTick) tickCounter = 0
-                else ticks = false
+        if (networks.isEmpty()) {
+            if (nodeMap.isNotEmpty()) {
+                println("No networks exits but node map not empty! Clearing all nodes!")
+                nodeMap.clear()
+                networks.clear()
             }
+            return
         }
 
-        for ((pos, node) in nodes.toList()) {
-            if (ticks && node.shouldTick()) {
-                node.tick(world, pos)
-            }
+
+        for (net in networks) {
+            net.tick(world)
         }
 
     }

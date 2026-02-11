@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component
 
 object CNCommands {
     fun init() {
-        ClientCommandRegistrationCallback.EVENT.register { dispatcher, ctx ->
+        ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
             val root = literal("cavenet").build()
             dispatcher.root.addChild(root)
 
@@ -22,15 +22,14 @@ object CNCommands {
             root.addChild(clear)
 
             val ticks = literal("ticks").executes {
-                Component.translatable("Current tick rate is: ${CNLogic.TicksPerTick}")
+                it.source.sendFeedback(Component.translatable("Current tick rate is: ${CNLogic.ticksToSkip}"))
                 1
             }.build()
             root.addChild(ticks)
 
             val ticksArg = argument("ticks", IntegerArgumentType.integer(-1)).executes {
-                CNLogic.TicksPerTick = IntegerArgumentType.getInteger(it, "ticks")
-                CNLogic.tickCounter = 0
-                Component.translatable("Tick rate set to: ${CNLogic.TicksPerTick}")
+                CNLogic.ticksToSkip = IntegerArgumentType.getInteger(it, "ticks")
+                it.source.sendFeedback(Component.translatable("Tick rate set to: ${CNLogic.ticksToSkip}"))
 
                 0
             }.build()

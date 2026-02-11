@@ -2,6 +2,9 @@ package com.theendercore.cavenet.client.init
 
 import com.theendercore.cavenet.Cavenet.mc
 import com.theendercore.cavenet.client.network.CaveNetwork
+import com.theendercore.cavenet.client.network.node.DoorNode
+import com.theendercore.cavenet.client.network.node.ExploreNode
+import com.theendercore.cavenet.client.network.node.ExploreNode.Companion.ExploreState
 import com.theendercore.cavenet.client.rendering.drawFaceFromDir
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
@@ -9,13 +12,15 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.LevelRenderer.getLightColor
 import net.minecraft.client.renderer.RenderType
-import net.minecraft.core.particles.DustParticleOptions
 import net.minecraft.util.Mth
-import net.minecraft.world.phys.Vec3
+import net.minecraft.world.inventory.InventoryMenu
 import kotlin.math.max
 
 object CNRenderer {
-    val GLASS = mc("textures/block/blue_stained_glass.png")
+    val DONE = mc("block/blue_stained_glass")
+    val OPEN = mc("block/orange_stained_glass")
+    val EXPLORE = mc("block/green_stained_glass")
+    val FROZEN = mc("block/ice")
 
     fun init() = WorldRenderEvents.AFTER_TRANSLUCENT.register(::renderCustom)
 
@@ -30,7 +35,18 @@ object CNRenderer {
         posStack.pushPose()
 
         val mtx = posStack.last().pose()
-        val buffer = consumers.getBuffer(RenderType.entityTranslucent(GLASS))!!
+        val buffer = consumers.getBuffer(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS))
+        // Sprites
+        val atlas = ctx.gameRenderer().minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+        val open = atlas.apply(OPEN)
+        val explore = atlas.apply(EXPLORE)
+        val done = atlas.apply(DONE)
+        val frozen = atlas.apply(FROZEN)
+
+        val redstone = atlas.apply(mc("item/redstone"))
+        val edge = atlas.apply(mc("item/apple"))
+        val unknown = atlas.apply(mc("block/purple_stained_glass"))
+
         val camPos = ctx.camera().position
 
         val color = 0xff_ffffff.toInt()
@@ -38,18 +54,29 @@ object CNRenderer {
         for (net in CNLogic.networks) {
             if (!ctx.camera().isInRenderDistance(net)) continue
 
-            world.addParticle(
-                DustParticleOptions(Vec3.fromRGB24(0xff0000).toVector3f(), 1.0F),
-                net.pos.x + 0.5, net.pos.y + 0.5, net.pos.z + 0.5, 0.0, 0.0, 0.0
-            )
+
+            buffer.drawFaceFromDir(mtx, net.pos, camPos, color, 14 shl 4, net.direction, redstone)
 
             if (net.isEmpty()) continue
             for (nodePos in net.nodePositions()) {
                 val node = CNLogic.nodeMap[nodePos] ?: continue
                 if (!node.shouldRender()) continue
-
                 val light = max(getLightColor(world, nodePos), 7 shl 4)
-                buffer.drawFaceFromDir(mtx, nodePos, camPos, color, light, node.network().direction)
+
+                if (node is DoorNode) {
+                    val sprite = when (net.phase) {
+                        CaveNetwork.NetPhase.OPENING_DOOR -> open
+                        CaveNetwork.NetPhase.EXPLORING_CAVE -> explore
+                        CaveNetwork.NetPhase.COMPLETE -> done
+                        CaveNetwork.NetPhase.FROZEN -> frozen
+                    }
+
+                    buffer.drawFaceFromDir(mtx, nodePos, camPos, color, light, net.direction, sprite)
+                } else if (node is ExploreNode) {
+                    val sprite = if (node.state == ExploreState.EDGE) edge else unknown
+                    buffer.drawFaceFromDir(mtx, nodePos, camPos, color, light, net.direction, sprite)
+                    buffer.drawFaceFromDir(mtx, nodePos, camPos, color, light, net.direction.clockWise, sprite)
+                }
             }
         }
 

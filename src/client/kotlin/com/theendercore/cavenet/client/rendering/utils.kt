@@ -2,6 +2,7 @@ package com.theendercore.cavenet.client.rendering
 
 import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.renderer.texture.OverlayTexture
+import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.phys.Vec3
@@ -15,6 +16,7 @@ fun VertexConsumer.drawFaceFromDir(
     color: Int,
     light: Int,
     dir: Direction,
+    sprite: TextureAtlasSprite,
 ) {
     val x1 = nodePos.x + (dir.normal.x * 0.5)
     val y1 = nodePos.y
@@ -27,48 +29,48 @@ fun VertexConsumer.drawFaceFromDir(
         Direction.DOWN -> {}
         Direction.UP -> {}
         Direction.SOUTH,
-            -> face(mtx, x2, y2, z1, x1, y1, z1, camPos, color, light, vec3(0, 1, 0))
+            -> face(mtx, x2, y2, z1, x1, y1, z1, camPos, color, light, vec3(0, 1, 0), sprite)
 
         Direction.NORTH,
-            -> face(mtx, x1, y2, z2, x2, y1, z2, camPos, color, light, vec3(0, 1, 0))
+            -> face(mtx, x1, y2, z2, x2, y1, z2, camPos, color, light, vec3(0, 1, 0), sprite)
 
         Direction.EAST,
-            -> face(mtx, x1, y2, z1, x1, y1, z2, camPos, color, light, vec3(0, 1, 0))
+            -> face(mtx, x1, y2, z1, x1, y1, z2, camPos, color, light, vec3(0, 1, 0), sprite)
 
         Direction.WEST,
-            -> face(mtx, x2, y2, z2, x2, y1, z1, camPos, color, light, vec3(0, 1, 0))
+            -> face(mtx, x2, y2, z2, x2, y1, z1, camPos, color, light, vec3(0, 1, 0), sprite)
     }
 }
 
 fun VertexConsumer.face(
     mtx: Matrix4f, x1: Number, y1: Number, z1: Number, x2: Number, y2: Number, z2: Number,
-    camPos: Vec3, color: Int, light: Int, normal: Vec3,
+    camPos: Vec3, color: Int, light: Int, normal: Vec3, sprite: TextureAtlasSprite,
 ) {
 
     addVertex(mtx, vec3(x1, y1, z1), camPos)
         .setColor(color)
-        .setUv(0.0F, 0.0F)
+        .setUv(sprite.u0, sprite.v0)
         .setOverlay(OverlayTexture.NO_OVERLAY)
         .setLight(light)
         .normal(normal)
 
     addVertex(mtx, vec3(x1, y2, z1), camPos)
         .setColor(color)
-        .setUv(1.0F, 0.0F)
+        .setUv(sprite.u0, sprite.v1)
         .setOverlay(OverlayTexture.NO_OVERLAY)
         .setLight(light)
         .normal(normal)
 
     addVertex(mtx, vec3(x2, y2, z2), camPos)
         .setColor(color)
-        .setUv(1.0F, 1.0F)
+        .setUv(sprite.u1, sprite.v1)
         .setOverlay(OverlayTexture.NO_OVERLAY)
         .setLight(light)
         .normal(normal)
 
     addVertex(mtx, vec3(x2, y1, z2), camPos)
         .setColor(color)
-        .setUv(0.0F, 1.0F)
+        .setUv(sprite.u1, sprite.v0)
         .setOverlay(OverlayTexture.NO_OVERLAY)
         .setLight(light)
         .normal(normal)
