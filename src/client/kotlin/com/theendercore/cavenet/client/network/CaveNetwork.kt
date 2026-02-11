@@ -40,12 +40,15 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, val phase: NetPha
     }
 
     fun size() = doorNodes.size + exploreNodes.size
+    fun isEmpty() = doorNodes.isEmpty() && exploreNodes.isEmpty()
 
     override fun toString(): String = buildString {
         append("Dir: $direction, ")
         append("Pos: [${pos.x}, ${pos.y}, ${pos.z}]")
         append("Phase: ${phase.name.lowercase()}")
     }
+
+    fun nodes()  = doorNodes + exploreNodes
 
     enum class NetPhase {
         OPENING_DOOR,
