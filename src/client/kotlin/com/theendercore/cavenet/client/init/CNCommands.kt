@@ -2,7 +2,8 @@ package com.theendercore.cavenet.client.init
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.IntegerArgumentType
-import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.arguments.StringArgumentType.string
+import com.mojang.brigadier.arguments.StringArgumentType.getString
 import com.mojang.brigadier.context.CommandContext
 import com.theendercore.cavenet.client.network.CaveNetwork
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument
@@ -39,10 +40,10 @@ object CNCommands {
 
 
         val freeze = literal("freeze").then(
-            argument("id", StringArgumentType.string())
+            argument("id", string())
                 .suggests { _, builder -> builder.listSuggestions(CNNetworkManager.networks.map { it.id.toString() }) }
                 .executes { ctx ->
-                    val id = StringArgumentType.getString(ctx, "id")
+                    val id = getString(ctx, "id")
                     val net = CNNetworkManager.networks.firstOrNull { it.id.toString() == id }
                     if (net != null) {
                         net.phase = CaveNetwork.NetPhase.FROZEN
@@ -58,10 +59,10 @@ object CNCommands {
 
 
         val unfreeze = literal("unfreeze").then(
-            argument("id", StringArgumentType.string())
+            argument("id", string())
                 .suggests { _, builder -> builder.listSuggestions(CNNetworkManager.networks.map { it.id.toString() }) }
                 .executes { ctx ->
-                    val id = StringArgumentType.getString(ctx, "id")
+                    val id = getString(ctx, "id")
                     val net = CNNetworkManager.networks.firstOrNull { it.id.toString() == id }
                     if (net != null) {
                         net.phase = CaveNetwork.NetPhase.OPENING_DOOR
@@ -93,6 +94,25 @@ object CNCommands {
             0
         }.build()
         root.addChild(unfreezeAll)
+
+
+        val delete = literal("delete").then(
+            argument("id", string())
+                .suggests { _, builder -> builder.listSuggestions(CNNetworkManager.networks.map { it.id.toString() }) }
+                .executes { ctx ->
+                    val id = getString(ctx, "id")
+                    val net = CNNetworkManager.networks.firstOrNull { it.id.toString() == id }
+                    if (net != null) {
+                        CNNetworkManager.removeNetwork(net)
+                        ctx.source.sendFeedback(Component.translatable("Deleted network: $id"))
+                        1
+                    } else {
+                        ctx.source.sendError(Component.translatable("No network with id: $id"))
+                        0
+                    }
+                }
+        ).build()
+        root.addChild(delete)
     }
 
     fun create(ctx: CommandContext<FabricClientCommandSource>): Int {
