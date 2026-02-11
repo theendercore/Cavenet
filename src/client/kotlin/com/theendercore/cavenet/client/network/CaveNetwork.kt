@@ -27,6 +27,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
     fun tick(world: ClientLevel) {
         when (phase) {
             NetPhase.OPENING_DOOR -> {
+                var mod = false
                 for (nodePos in doorPos.toList()) {
                     val node = CNNetworkManager.nodeMap[nodePos]
                     if (node !is DoorNode) {
@@ -49,12 +50,13 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
 
                         doorPos.add(sidePos)
                         DoorNode(sidePos, this)
-                        return
+                        mod = true
+//                        return
                     }
                     node.isActive = false
                 }
 
-                startExploring(world)
+                if (!mod) startExploring(world)
             }
 
             NetPhase.EXPLORING_CAVE -> {
@@ -86,7 +88,8 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
                             if (otherNode is DoorNode && net != this && net.phase == NetPhase.COMPLETE) {
                                 for (otherNetNode in net.doorPos.toList()) {
                                     explorePos.add(otherNetNode)
-                                    ExploreNode(otherNetNode, this, ExploreState.EDGE)
+                                    ExploreNode(otherNetNode, this, ExploreState.EDGE).edges =
+                                        listOf(net.direction.opposite)
                                     net.doorPos.remove(otherNetNode)
                                 }
                                 CNNetworkManager.toRemove.add(net.id)
@@ -115,10 +118,13 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
 
     private fun markAsDone() {
         phase = NetPhase.COMPLETE
-        for (nodePos in explorePos) {
-            CNNetworkManager.nodeMap.remove(nodePos)
+        for (nodePos in explorePos.toList()) {
+            val node = CNNetworkManager.nodeMap[nodePos]
+            if (node is ExploreNode && node.edges.isEmpty()) {
+                CNNetworkManager.nodeMap.remove(nodePos)
+                explorePos.remove(nodePos)
+            }
         }
-        explorePos.clear()
         sendMessage("Net [$pos] Done!")
     }
 

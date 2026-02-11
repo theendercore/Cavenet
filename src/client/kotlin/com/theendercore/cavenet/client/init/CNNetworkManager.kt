@@ -1,12 +1,15 @@
 package com.theendercore.cavenet.client.init
 
+import com.theendercore.cavenet.client.CavenetClient
 import com.theendercore.cavenet.client.network.CaveNetwork
 import com.theendercore.cavenet.client.network.node.INode
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.tags.FluidTags
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.level.block.state.BlockState
 import java.util.*
 
 object CNNetworkManager {
@@ -38,6 +41,8 @@ object CNNetworkManager {
 
 
     fun clientTick(world: ClientLevel) {
+        if (!CavenetClient.config.tickNetworks) return
+
         if (networks.isEmpty()) {
             if (nodeMap.isNotEmpty()) {
                 println("No networks exits but node map not empty! Clearing all nodes!")
@@ -61,7 +66,13 @@ object CNNetworkManager {
     }
 
     fun canNodeExplore(world: ClientLevel, pos: BlockPos): Boolean {
-        return world.getBlockState(pos).isAir && !world.canSeeSky(pos)
+        return canBeInBlock(world, pos, world.getBlockState(pos)) && !world.canSeeSky(pos)
+    }
+
+    fun canBeInBlock(world: ClientLevel, pos: BlockPos, state: BlockState): Boolean {
+        if (state.isAir) return true
+
+        return state.getCollisionShape(world, pos).isEmpty && !state.fluidState.`is`(FluidTags.LAVA)
     }
 
 }
