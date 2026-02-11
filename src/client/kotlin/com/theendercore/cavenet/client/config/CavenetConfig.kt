@@ -12,6 +12,6 @@ class CavenetConfig : Config(id(MODID)) {
     var tickNetworks = true
 
     var maxCaveSize = 100_000
-    var maxDoorSize = 1_000
+    var maxDoorSize = 1_500
 
 }
