@@ -1,5 +1,6 @@
 package com.theendercore.cavenet.client.network
 
+import com.theendercore.cavenet.client.CavenetClient
 import com.theendercore.cavenet.client.init.CNNetworkManager
 import com.theendercore.cavenet.client.network.node.DoorNode
 import com.theendercore.cavenet.client.network.node.ExploreNode
@@ -25,6 +26,16 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
     val explorePos = mutableListOf<BlockPos>()
 
     fun tick(world: ClientLevel) {
+        if (phase != NetPhase.FROZEN) {
+            if (doorPos.size > CavenetClient.config.maxDoorSize) {
+                sendMessage("Reached max door size at ${sPos()}. Freezing!")
+                phase = NetPhase.FROZEN
+            }
+            if (explorePos.size > CavenetClient.config.maxCaveSize) {
+                sendMessage("Reached max cave size at ${sPos()}. Freezing!")
+                phase = NetPhase.FROZEN
+            }
+        }
         when (phase) {
             NetPhase.OPENING_DOOR -> {
                 var mod = false
@@ -125,7 +136,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
                 explorePos.remove(nodePos)
             }
         }
-        sendMessage("Net [$pos] Done!")
+        sendMessage("Net ${sPos()} Done!")
     }
 
     private fun startExploring(world: ClientLevel) {
@@ -152,9 +163,12 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
         explorePos.clear()
     }
 
+    fun sPos() = "[${pos.x}, ${pos.y}, ${pos.z}]"
+
     override fun toString(): String = buildString {
+        append("Id: $id, ")
         append("Dir: $direction, ")
-        append("Pos: [${pos.x}, ${pos.y}, ${pos.z}], ")
+        append("Pos: ${sPos()}, ")
         append("Phase: ${phase.name.lowercase()}")
     }
 
