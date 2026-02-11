@@ -1,6 +1,6 @@
 projectTitle = "Cavenet"
 modId = "cavenet"
-modVersion = "1.0.0"
+modVersion = "1.0.0-alpha.1"
 group = "org.teamvoided"
 githubRepo = "theendercore/Cavenet"
 discordServerInviteId = "KZ5Q364hEg"
