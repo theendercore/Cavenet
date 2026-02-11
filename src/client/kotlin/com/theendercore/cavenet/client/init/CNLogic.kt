@@ -1,12 +1,18 @@
-package com.theendercore.cavenet.client.cavenet
+package com.theendercore.cavenet.client.init
 
-import com.theendercore.cavenet.client.CavenetClient.TicksPerTick
 import com.theendercore.cavenet.client.CavenetClient.nodes
+import com.theendercore.cavenet.client.network.CaveNetwork
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
+import net.minecraft.world.entity.player.Player
 
 object CNLogic {
+    var networks = mutableListOf<CaveNetwork>()
+    var TicksPerTick = -1
+    var tickCounter = 0
+
     fun init() {
         ClientTickEvents.END_WORLD_TICK.register(::clientTick)
     }
@@ -15,7 +21,6 @@ object CNLogic {
         return world.getBlockState(pos).isAir && !world.canSeeSky(pos)
     }
 
-    var tickCounter = 0
 
     fun clientTick(world: ClientLevel) {
         if (nodes.isEmpty()) return
@@ -35,5 +40,12 @@ object CNLogic {
             }
         }
 
+    }
+
+    fun addNetwork(player: Player) = addNetwork(player.blockPosition(), player.nearestViewDirection)
+    fun addNetwork(pos: BlockPos, dir: Direction): CaveNetwork {
+        val net = CaveNetwork(pos, dir)
+        networks.add(net)
+        return net
     }
 }

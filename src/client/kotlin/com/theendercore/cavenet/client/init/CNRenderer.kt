@@ -1,9 +1,9 @@
-package com.theendercore.cavenet.client.cavenet
+package com.theendercore.cavenet.client.init
 
 import com.mojang.blaze3d.vertex.VertexConsumer
 import com.theendercore.cavenet.Cavenet.mc
 import com.theendercore.cavenet.client.CavenetClient.nodes
-import com.theendercore.cavenet.client.cavenet.node.DoorNode
+import com.theendercore.cavenet.client.network.node.DoorNode
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.minecraft.client.renderer.LevelRenderer.getLightColor
@@ -16,11 +16,9 @@ import org.joml.Matrix4f
 import kotlin.math.max
 
 object CNRenderer {
-    fun init() {
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(::renderCustom)
-    }
-
     val GLASS = mc("textures/block/blue_stained_glass.png")
+
+    fun init() = WorldRenderEvents.AFTER_TRANSLUCENT.register(::renderCustom)
 
     fun renderCustom(ctx: WorldRenderContext) {
         val posStack = ctx.matrixStack() ?: return
@@ -40,7 +38,7 @@ object CNRenderer {
             for ((nodePos, node) in nodes.toList()) {
                 if (node.shouldRender() && node is DoorNode) {
                     val light = max(getLightColor(world, nodePos), 7 shl 4)
-                    buffer.faceFromDir(mtx, nodePos, camPos, color, light, node.direction)
+                    buffer.faceFromDir(mtx, nodePos, camPos, color, light, node.network().direction)
                 }
             }
         }
