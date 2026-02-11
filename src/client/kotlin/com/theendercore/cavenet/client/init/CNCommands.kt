@@ -2,12 +2,15 @@ package com.theendercore.cavenet.client.init
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.IntegerArgumentType
+import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
+import com.theendercore.cavenet.client.network.CaveNetwork
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.network.chat.Component
+import org.teamvoided.creative_works.comands.utils.ImprovedLookup.listSuggestions
 
 object CNCommands {
     fun init() {
@@ -22,18 +25,55 @@ object CNCommands {
             root.addChild(clear)
 
             val ticks = literal("ticks").executes {
-                it.source.sendFeedback(Component.translatable("Current tick rate is: ${CNLogic.ticksToSkip}"))
+                it.source.sendFeedback(Component.translatable("Current tick rate is: ${CNNetworkManager.ticksToSkip}"))
                 1
             }.build()
             root.addChild(ticks)
 
             val ticksArg = argument("ticks", IntegerArgumentType.integer(-1)).executes {
-                CNLogic.ticksToSkip = IntegerArgumentType.getInteger(it, "ticks")
-                it.source.sendFeedback(Component.translatable("Tick rate set to: ${CNLogic.ticksToSkip}"))
+                CNNetworkManager.ticksToSkip = IntegerArgumentType.getInteger(it, "ticks")
+                it.source.sendFeedback(Component.translatable("Tick rate set to: ${CNNetworkManager.ticksToSkip}"))
 
                 0
             }.build()
             ticks.addChild(ticksArg)
+
+
+            val freeze = literal("freeze").then(
+                argument("id", StringArgumentType.string())
+                    .suggests { _, builder -> builder.listSuggestions(CNNetworkManager.networks.map { it.id.toString() }) }
+                    .executes { ctx ->
+                        val id = StringArgumentType.getString(ctx, "id")
+                        val net = CNNetworkManager.networks.firstOrNull { it.id.toString() == id }
+                        if (net != null) {
+                            net.phase = CaveNetwork.NetPhase.FROZEN
+                            ctx.source.sendFeedback(Component.translatable("Froze network: $id"))
+                            1
+                        } else {
+                            ctx.source.sendError(Component.translatable("No network with id: $id"))
+                            0
+                        }
+                    }
+            ).build()
+            root.addChild(freeze)
+
+            val unfreeze = literal("unfreeze").then(
+                argument("id", StringArgumentType.string())
+                    .suggests { _, builder -> builder.listSuggestions(CNNetworkManager.networks.map { it.id.toString() }) }
+                    .executes { ctx ->
+                        val id = StringArgumentType.getString(ctx, "id")
+                        val net = CNNetworkManager.networks.firstOrNull { it.id.toString() == id }
+                        if (net != null) {
+                            net.phase = CaveNetwork.NetPhase.OPENING_DOOR
+                            ctx.source.sendFeedback(Component.translatable("Unfroze network: $id"))
+                            1
+                        } else {
+                            ctx.source.sendError(Component.translatable("No network with id: $id"))
+                            0
+                        }
+                    }
+            ).build()
+            root.addChild(unfreeze)
         }
 
     }
@@ -42,7 +82,7 @@ object CNCommands {
         val src = ctx.source ?: return -1
         val player = src.player ?: return -1
 
-        val net = CNLogic.addNetwork(player)
+        val net = CNNetworkManager.addNetwork(player)
         src.sendFeedback(Component.translatable("Crated network ${net}!"))
         return Command.SINGLE_SUCCESS
     }
@@ -50,10 +90,10 @@ object CNCommands {
     fun clearNodes(ctx: CommandContext<FabricClientCommandSource>): Int {
         val src = ctx.source ?: return -1
 
-        val netCount = CNLogic.networks.size
-        val nodeCount = CNLogic.nodeMap.size
-        CNLogic.nodeMap.clear()
-        CNLogic.networks.clear()
+        val netCount = CNNetworkManager.networks.size
+        val nodeCount = CNNetworkManager.nodeMap.size
+        CNNetworkManager.nodeMap.clear()
+        CNNetworkManager.networks.clear()
         src.sendFeedback(Component.literal("Cleared $netCount networks and $nodeCount nodes!"))
         return Command.SINGLE_SUCCESS
     }
