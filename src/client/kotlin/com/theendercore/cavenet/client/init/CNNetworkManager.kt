@@ -7,6 +7,7 @@ import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.entity.player.Player
+import java.util.*
 
 object CNNetworkManager {
     val networks = mutableListOf<CaveNetwork>()
@@ -27,6 +28,8 @@ object CNNetworkManager {
         networks.remove(net)
     }
 
+    val toRemove = mutableListOf<UUID>()
+
     var ticksToSkip = -1
     var operationsPerTick = -1
     var skippedTickCounter = 0
@@ -46,8 +49,14 @@ object CNNetworkManager {
 
 
         for (net in networks) {
+            if (toRemove.contains(net.id)) continue
             net.tick(world)
         }
+
+        for (id in toRemove) {
+            removeNetwork(networks.first { it.id == id })
+        }
+        toRemove.clear()
 
     }
 

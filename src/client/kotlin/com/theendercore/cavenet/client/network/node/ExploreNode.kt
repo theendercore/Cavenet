@@ -3,8 +3,11 @@ package com.theendercore.cavenet.client.network.node
 import com.theendercore.cavenet.client.init.CNNetworkManager
 import com.theendercore.cavenet.client.network.CaveNetwork
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 
 class ExploreNode(pos: BlockPos, val net: CaveNetwork, var state: ExploreState = ExploreState.UNDETERMINED) : INode {
+    var edges: List<Direction> = listOf()
+
     init {
         CNNetworkManager.nodeMap[pos] = this
     }

@@ -58,6 +58,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
             }
 
             NetPhase.EXPLORING_CAVE -> {
+                var mod = false
                 for (nodePos in explorePos.toList()) {
                     val node = CNNetworkManager.nodeMap[nodePos]
                     if (node !is ExploreNode) {
@@ -72,23 +73,39 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
                         continue
                     }
 
-                    var hasEdge = false
+                    val edges = mutableListOf<Direction>()
                     for (dir in Direction.entries) {
                         val sidePos = nodePos.relative(dir)
                         if (!CNNetworkManager.canNodeExplore(world, sidePos)) {
-                            hasEdge = true
+                            edges.add(dir)
                             continue
                         }
                         val otherNode = CNNetworkManager.nodeMap[sidePos]
-                        if (otherNode != null) continue
+                        if (otherNode != null) {
+                            val net = otherNode.network()
+                            if (otherNode is DoorNode && net != this && net.phase == NetPhase.COMPLETE) {
+                                for (otherNetNode in net.doorPos.toList()) {
+                                    explorePos.add(otherNetNode)
+                                    ExploreNode(otherNetNode, this, ExploreState.EDGE)
+                                    net.doorPos.remove(otherNetNode)
+                                }
+                                CNNetworkManager.toRemove.add(net.id)
+                                mod = true
+                            }
+                            continue
+                        }
 
                         explorePos.add(sidePos)
                         ExploreNode(sidePos, this)
-                        return
+                        mod = true
+//                        return
                     }
-                    node.state = if (hasEdge) ExploreState.EDGE else ExploreState.MIDDLE
+                    node.state = if (edges.isNotEmpty()) ExploreState.EDGE else ExploreState.MIDDLE
+                    if (edges.isNotEmpty()) node.edges = edges
+
                 }
-                markAsDone()
+
+                if (!mod) markAsDone()
             }
 
             NetPhase.COMPLETE -> Unit
@@ -110,7 +127,7 @@ class CaveNetwork(val direction: Direction, val pos: BlockPos, var phase: NetPha
         var offPos: BlockPos
         for (dPos in doorPos) {
             offPos = dPos.relative(direction)
-            if (CNNetworkManager.canNodeExplore(world, offPos)) {
+            if (CNNetworkManager.canNodeExplore(world, offPos) && CNNetworkManager.nodeMap[offPos] == null) {
                 explorePos.add(offPos)
                 ExploreNode(offPos, this)
             }
