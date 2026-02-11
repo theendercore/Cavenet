@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.LevelRenderer.getLightColor
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.util.Mth
 import net.minecraft.world.inventory.InventoryMenu
+import net.minecraft.world.phys.AABB
 import kotlin.math.max
 
 object CNRenderer {
@@ -40,6 +41,8 @@ object CNRenderer {
 
         val mtx = posStack.last().pose()
         val buffer = consumers.getBuffer(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS))
+
+        profiler.push("sprites")
         // Sprites
         val atlas = ctx.gameRenderer().minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
         val open = atlas.apply(OPEN)
@@ -50,11 +53,13 @@ object CNRenderer {
         val redstone = atlas.apply(mc("item/redstone"))
         val edge = atlas.apply(id("block/edge"))
         val undetermined = atlas.apply(id("block/undetermined"))
+        profiler.pop()
 
         val camPos = ctx.camera().position
 
         val color = 0xff_ffffff.toInt()
 
+        profiler.push("node")
         for (net in CNNetworkManager.networks) {
             if (!ctx.camera().isInRenderDistance(net)) continue
 
@@ -79,6 +84,7 @@ object CNRenderer {
             for (nodePos in net.nodePositions()) {
                 val node = CNNetworkManager.nodeMap[nodePos] ?: continue
                 if (!node.shouldRender()) continue
+                if (!ctx.frustum()!!.isVisible(AABB.encapsulatingFullBlocks(nodePos, nodePos))) continue
                 val light = max(getLightColor(world, nodePos), 7 shl 4)
 
                 if (node is DoorNode) {
@@ -104,6 +110,7 @@ object CNRenderer {
                 }
             }
         }
+        profiler.pop()
 
         posStack.popPose()
         profiler.pop()
